@@ -65,21 +65,21 @@ export function applyConstraints(params: RequirementParams, config: Config): Req
 
     return {
       ...r,
-      quantity: Math.min(quantity, 20), // Cap at 20 items per requirement
+      quantity: Math.min(quantity, 500), // Cap at 500 items per requirement
       tokenIds: (r.tokenIds as string[]) || [],
     } as Requirement;
   });
 
   // Apply total cap if all requirements exceed 20 items total
   const totalRequested = params.requirements.reduce((sum, r) => sum + (r.quantity || 0), 0);
-  if (totalRequested > 20) {
+  if (totalRequested > 500) {
     console.log(
       chalk.yellow(
-        `\n⚠️  Total requested items (${totalRequested}) exceeds maximum (20). Reducing proportionally...\n`
+        `\n⚠️  Total requested items (${totalRequested}) exceeds maximum (500). Reducing proportionally...\n`
       )
     );
 
-    const scale = 20 / totalRequested;
+    const scale = 500 / totalRequested;
     let allocated = 0;
 
     params.requirements = params.requirements.map((req, index) => {
@@ -87,7 +87,7 @@ export function applyConstraints(params: RequirementParams, config: Config): Req
         // Last requirement gets remainder
         return {
           ...req,
-          quantity: 20 - allocated,
+          quantity: 500 - allocated,
         };
       } else {
         const newQuantity = Math.max(1, Math.floor((req.quantity || 0) * scale));

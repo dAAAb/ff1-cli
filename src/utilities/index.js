@@ -67,25 +67,48 @@ async function queryTokensByAddress(ownerAddress, quantity, duration = 10) {
 
     console.log(chalk.grey(`✓ Got ${selectedTokens.length} token(s)`));
 
-    // Convert tokens to DP1 items
+    // Convert tokens to DP1 items in batches to avoid timeouts
     const items = [];
-    for (const token of selectedTokens) {
-      // Detect blockchain from contract address (support both camelCase and snake_case)
-      let chain = 'ethereum';
-      const contractAddr = token.contract_address || token.contractAddress || '';
-      if (contractAddr.startsWith('KT')) {
-        chain = 'tezos';
+    const BATCH_SIZE = 10;
+    const totalBatches = Math.ceil(selectedTokens.length / BATCH_SIZE);
+
+    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+      const start = batchIndex * BATCH_SIZE;
+      const end = Math.min(start + BATCH_SIZE, selectedTokens.length);
+      const batch = selectedTokens.slice(start, end);
+
+      // Show progress for large collections
+      if (totalBatches > 1) {
+        process.stdout.write(chalk.grey(`   Processing batch ${batchIndex + 1}/${totalBatches}...\r`));
       }
 
-      // Map indexer token data to standard format
-      const tokenData = nftIndexer.mapIndexerDataToStandardFormat(token, chain);
+      for (const token of batch) {
+        // Detect blockchain from contract address (support both camelCase and snake_case)
+        let chain = 'ethereum';
+        const contractAddr = token.contract_address || token.contractAddress || '';
+        if (contractAddr.startsWith('KT')) {
+          chain = 'tezos';
+        }
 
-      if (tokenData.success) {
-        const dp1Result = nftIndexer.convertToDP1Item(tokenData, duration);
-        if (dp1Result.success && dp1Result.item) {
-          items.push(dp1Result.item);
+        // Map indexer token data to standard format
+        const tokenData = nftIndexer.mapIndexerDataToStandardFormat(token, chain);
+
+        if (tokenData.success) {
+          const dp1Result = nftIndexer.convertToDP1Item(tokenData, duration);
+          if (dp1Result.success && dp1Result.item) {
+            items.push(dp1Result.item);
+          }
         }
       }
+
+      // Small delay between batches to avoid rate limiting
+      if (batchIndex < totalBatches - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+
+    if (totalBatches > 1) {
+      console.log(chalk.grey(`   Processing batch ${totalBatches}/${totalBatches}... done`));
     }
 
     return items;

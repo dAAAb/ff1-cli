@@ -282,7 +282,7 @@ const intentParserFunctionSchemas: OpenAI.Chat.ChatCompletionTool[] = [
                 quantity: {
                   type: 'number',
                   description:
-                    'Number of items to fetch (default: 5 for fetch_feed, all for query_address unless specified)',
+                    'Number of items to fetch (default: 500 for address queries, 20 for feeds)',
                 },
               },
               required: ['type'],
