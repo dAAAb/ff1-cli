@@ -1075,20 +1075,46 @@ async function searchNFTs(params) {
  */
 async function queryTokensByOwner(ownerAddress, limit = 100) {
   try {
-    logger.info(`[NFT Indexer] Querying tokens for owner: ${ownerAddress}`);
+    logger.info(`[NFT Indexer] Querying tokens for owner: ${ownerAddress} (limit: ${limit})`);
 
-    const tokens = await queryTokens({
-      owners: [ownerAddress],
-      limit,
-      offset: 0,
-    });
+    const allTokens = [];
+    const BATCH_SIZE = 50; // Use safe batch size well below 255
+    let offset = 0;
 
-    logger.info(`[NFT Indexer] Found ${tokens.length} token(s) for owner ${ownerAddress}`);
+    // Calculate total needed or use limit
+    const totalToFetch = limit;
+
+    while (allTokens.length < totalToFetch) {
+      const remaining = totalToFetch - allTokens.length;
+      const currentLimit = Math.min(remaining, BATCH_SIZE);
+
+      logger.debug(`[NFT Indexer] Fetching batch: offset=${offset}, limit=${currentLimit}`);
+
+      const tokens = await queryTokens({
+        owners: [ownerAddress],
+        limit: currentLimit,
+        offset: offset,
+      });
+
+      if (!tokens || tokens.length === 0) {
+        break; // No more tokens found
+      }
+
+      allTokens.push(...tokens);
+      offset += tokens.length;
+
+      // If we got fewer than requested, we've reached the end
+      if (tokens.length < currentLimit) {
+        break;
+      }
+    }
+
+    logger.info(`[NFT Indexer] Found ${allTokens.length} token(s) for owner ${ownerAddress}`);
 
     return {
       success: true,
-      tokens,
-      count: tokens.length,
+      tokens: allTokens,
+      count: allTokens.length,
     };
   } catch (error) {
     logger.error('[NFT Indexer] Failed to query tokens by owner:', error.message);
@@ -1100,6 +1126,7 @@ async function queryTokensByOwner(ownerAddress, limit = 100) {
     };
   }
 }
+
 
 module.exports = {
   // Initialization
