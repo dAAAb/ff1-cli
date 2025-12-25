@@ -33,3 +33,30 @@ npm run lint:fix       # Lint + fix
 ## License
 
 MIT
+
+## Common Issues & Fixes (2025-12 Updates)
+
+### 1. Grok Model Deprecation
+**Error:** `The model grok-beta was deprecated...`
+**Fix:** Update `config.json` to use a newer model version (e.g., `grok-3`).
+```json
+"models": {
+  "grok": {
+    "model": "grok-3",
+    ...
+  }
+}
+```
+
+### 2. Runtime Module Loading Error
+**Error:** `Intent parser failed: validateAddresses is not a function`
+**Cause:** Dynamic `import()` calls failing in certain runtime contexts (especially within `src/utilities/functions.js`).
+**Fix:** Replaced dynamic imports with standard `require()` calls to ensure reliable module resolution.
+
+### 3. Playlist Verification & Signing
+**Error:** `Invalid playlist data: signature: Required`
+**Cause:** The `dp1-js` library enforces DP-1 specification compliance, which requires playlists to be signed, even for local use.
+**Fix:** 
+- You must configure a valid Ed25519 private key in `config.json`.
+- **Important:** The key must be in **PKCS#8** format (base64 encoded). Simple random seeds will fail with `Invalid keyData`.
+- Use `crypto.generateKeyPair` (Node.js) to generate a compatible key.
