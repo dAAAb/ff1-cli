@@ -36,7 +36,7 @@ function initializeUtilities(_config) {
 async function queryTokensByAddress(ownerAddress, quantity, duration = 10) {
   try {
     // Query tokens by owner
-    const result = await nftIndexer.queryTokensByOwner(ownerAddress, 100);
+    const result = await nftIndexer.queryTokensByOwner(ownerAddress, 500);
 
     if (!result.success) {
       console.log(chalk.yellow(`   Could not fetch tokens for ${ownerAddress}`));

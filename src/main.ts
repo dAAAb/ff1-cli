@@ -59,7 +59,7 @@ export function validateRequirements(requirements: Requirement[]): Requirement[]
       }
       return {
         ...req,
-        quantity: Math.min(req.quantity || 5, 20),
+        quantity: Math.min(req.quantity || 20, 500),
       };
     }
 
@@ -71,7 +71,7 @@ export function validateRequirements(requirements: Requirement[]): Requirement[]
       }
       return {
         ...req,
-        quantity: req.quantity ? Math.min(req.quantity, 100) : undefined,
+        quantity: req.quantity ? Math.min(req.quantity, 500) : undefined,
       };
     }
 
@@ -87,7 +87,7 @@ export function validateRequirements(requirements: Requirement[]): Requirement[]
 
       return {
         ...req,
-        quantity: Math.min(req.quantity || req.tokenIds.length, 20),
+        quantity: Math.min(req.quantity || req.tokenIds.length, 500),
         tokenIds: req.tokenIds || [],
       };
     }

@@ -1,0 +1,31 @@
+{
+  "dpVersion": "1.0.0",
+  "id": "black-screen-playlist",
+  "title": "Black Screen (Sleep Mode)",
+  "created": "2025-12-25T00:00:00.000Z",
+  "items": [
+    {
+      "id": "black-screen-item",
+      "title": "Black Screen",
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "duration": 36000,
+      "license": "open",
+      "created": "2025-12-25T00:00:00.000Z",
+      "display": {
+        "scaling": "fill",
+        "background": "#000000",
+        "margin": 0
+      }
+    }
+  ],
+  "defaults": {
+    "display": {
+      "scaling": "fill",
+      "background": "#000000",
+      "margin": 0
+    },
+    "license": "open",
+    "duration": 36000
+  },
+  "signature": "ed25519:0xf64e3147922096f22cd9c2b715d43ac489ec069aeecd775d408e432dd3073933e44e76b78759aa58c8a29d0821b1a38c53fea713f5a190886008da15aa329707"
+}
