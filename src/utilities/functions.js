@@ -140,8 +140,8 @@ async function verifyPlaylist(params) {
 
   console.log(chalk.cyan('\nValidating playlist...'));
 
-  // Dynamic import to avoid circular dependency
-  const { verifyPlaylist: verify } = await import('./playlist-verifier');
+  // Dynamic require to avoid circular dependency
+  const { verifyPlaylist: verify } = require('./playlist-verifier');
 
   const result = verify(playlist);
 
@@ -200,8 +200,8 @@ async function verifyAddresses(params) {
     };
   }
 
-  // Dynamic import to avoid circular dependency
-  const { validateAddresses } = await import('./address-validator');
+  // Dynamic require to avoid circular dependency
+  const { validateAddresses } = require('./address-validator');
 
   const result = validateAddresses(addresses);
 
@@ -252,7 +252,7 @@ async function verifyAddresses(params) {
  * }
  */
 async function getConfiguredDevices() {
-  const { getFF1DeviceConfig } = await import('../config');
+  const { getFF1DeviceConfig } = require('../config');
   const deviceConfig = getFF1DeviceConfig();
 
   if (!deviceConfig.devices || deviceConfig.devices.length === 0) {
