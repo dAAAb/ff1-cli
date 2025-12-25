@@ -601,6 +601,98 @@ async function buildPlaylistWithAI(params, options = {}) {
                 )
               );
             }
+
+            // BYPASS AI FOR LARGE COLLECTIONS: When there are more than 20 items,
+            // the AI will timeout trying to pass them back to the API.
+            // We directly build, verify, and send the playlist ourselves.
+            if (collectedItems.length > 20 && params.requirements.length === 1) {
+              console.log(chalk.cyan('\n→ Large collection detected - building playlist directly...'));
+
+              try {
+                const utilities = require('../utilities');
+                const { verifyPlaylist, sendPlaylistToDevice } = require('../utilities/functions');
+                const { savePlaylist } = require('../utils');
+
+                // Apply shuffle if needed
+                let itemsToUse = collectedItems;
+                if (params.playlistSettings && params.playlistSettings.preserveOrder === false) {
+                  itemsToUse = utilities.shuffleArray([...collectedItems]);
+                }
+
+                // Build playlist directly
+                console.log(chalk.cyan(`→ Building playlist with ${itemsToUse.length} items...`));
+                const playlist = await utilities.buildDP1Playlist(
+                  itemsToUse,
+                  params.playlistSettings?.title || null,
+                  params.playlistSettings?.slug || null
+                );
+
+                if (!playlist || !playlist.dpVersion) {
+                  throw new Error('Failed to build playlist');
+                }
+
+                finalPlaylist = playlist;
+
+                // Save playlist
+                const savedPath = await savePlaylist(playlist, outputPath);
+                console.log(chalk.green(`✓ Playlist saved: ${savedPath}`));
+
+                // Verify playlist
+                console.log(chalk.cyan('→ Verifying playlist...'));
+                const verifyResult = await verifyPlaylist({ playlist });
+                if (verifyResult.valid) {
+                  console.log(chalk.green('✓ Playlist verified'));
+                } else {
+                  console.log(chalk.yellow(`⚠ Verification issues: ${verifyResult.error}`));
+                }
+
+                // Send to device if requested
+                const hasDevice = params.playlistSettings && params.playlistSettings.deviceName !== undefined;
+                if (hasDevice) {
+                  console.log(chalk.cyan('→ Sending to device...'));
+                  const sendResult = await sendPlaylistToDevice({
+                    playlist,
+                    deviceName: params.playlistSettings.deviceName,
+                  });
+                  if (sendResult && sendResult.success) {
+                    sentToDevice = true;
+                    console.log(chalk.green(`✓ Sent to device: ${sendResult.deviceName}`));
+                  } else {
+                    console.log(chalk.red(`✗ Failed to send: ${sendResult?.error || 'Unknown error'}`));
+                  }
+                }
+
+                // Publish if requested
+                let publishResult = null;
+                if (params.playlistSettings && params.playlistSettings.feedServer) {
+                  console.log(chalk.cyan('→ Publishing to feed server...'));
+                  const { publishPlaylist } = require('../utilities/playlist-publisher');
+                  publishResult = await publishPlaylist(
+                    outputPath,
+                    params.playlistSettings.feedServer.baseUrl,
+                    params.playlistSettings.feedServer.apiKey
+                  );
+                  if (publishResult.success) {
+                    console.log(chalk.green('✓ Published to feed server'));
+                  } else {
+                    console.log(chalk.red(`✗ Failed to publish: ${publishResult.error}`));
+                  }
+                }
+
+                // Return success - bypass remaining AI orchestration
+                return {
+                  success: true,
+                  playlist: finalPlaylist,
+                  sentToDevice,
+                  published: publishResult?.success || false,
+                  publishResult,
+                  bypassed: true, // Indicate we bypassed AI for debugging
+                };
+              } catch (bypassError) {
+                console.log(chalk.red(`✗ Direct build failed: ${bypassError.message}`));
+                // Fall through to let AI try (though it will probably timeout)
+              }
+            }
           }
 
           // Track final playlist
